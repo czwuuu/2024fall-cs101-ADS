@@ -1,24 +1,27 @@
-#connect, 能连接返回segments, 不能连接返回0
-def connect(mat, w, h, x1, y1, x2, y2):
-    segments = 0
-    x1 = x1 + 1
-    y1 = y1 + 1
-    x2 = x2 + 1
-    y2 = y2 + 1
-    direction = [[1, 0], [0, -1], [-1, 0], [0, 1]]
-    dir_ind = 0
-    while not(x1 == x2 and y1 == y2):
-        x1 += direction[dir_ind][0]
-        y1 += direction[dir_ind][1]
-        if mat[y1][x1] == "X" or x1 < 0 or x1 > w+1 or y1 < 0 or y1 > h+1:
-            x1 -= direction[dir_ind][0]
-            y1 -= direction[dir_ind][1]
-            dir_ind += 1
-            if dir_ind == 4:
-                segments = 0
-                break
+from collections import deque
 
-    return segments
+direction = [[1, 0], [0, -1], [-1, 0], [0, 1]]
+def connect(mat, w, h, x1, y1, x2, y2):
+    queue = deque(); queue.append((x1, y1, -1, 0))
+    inq = set(); inq.add((x1, y1))
+    recorder = []
+    if x1 == x2 and y1 == y2:
+        return 0
+
+    while queue:
+        x, y, dire, turn = queue.popleft()
+        for i in range(4):
+            nx, ny = x+direction[i][0], y+direction[i][1]
+            if (nx, ny) in inq or nx < 0 or nx > w+1 or ny < 0 or ny > h+1:
+                continue
+            if mat[ny][nx] != 'X' or (nx == x2 and ny == y2):
+                turn_new = turn+1 if dire != i else turn
+                if nx == x2 and ny == y2:
+                    recorder.append(turn_new)
+                else:
+                    inq.add((nx, ny))
+                    queue.append((nx, ny, i, turn_new))
+    return min(recorder) if recorder else -1
 
 #输入和答案的存储
 n = 0
@@ -44,13 +47,15 @@ while True:
                 break
             else:
                 _answer_.append(connect(mat, w, h, x1, y1, x2, y2))
+        answer.append(_answer_)
 
 #输出模块
 for i in range(1, n):
     print(f"Board #{i}:")
-    for j in range(1, m):
-        if answer[i-1][j-1] == 0:
+    for j in range(1, len(answer[i-1])+1):
+        if answer[i-1][j-1] == -1:
             ans_word = "impossible."
         else:
             ans_word = str(answer[i-1][j-1])+" segments."
         print(f"Pair {j}: {ans_word}")
+    print('')
